@@ -556,7 +556,7 @@ local function runRotation()
             --Chi Ji
             if isChecked("Chi Ji") and not isCastingSpell(spell.essenceFont) then
                 if getLowAllies(getValue("Chi Ji")) >= getValue("Chi Ji Targets") then
-                    if cast.invokeChiJi(lowest.unit) then return end
+                    if cast.invokeChiJiTheRedCrane(lowest.unit) then return end
                 end
             end			
 			--Jade Statue
@@ -618,22 +618,22 @@ local function runRotation()
             --Enveloping Mists
 			if isChecked("Enveloping Mist") and not isCastingSpell(spell.essenceFont) then
 				if lowest.hp <= getValue("Enveloping Mist") and getBuffRemain(lowest.unit, spell.envelopingMist, "player") < 1 then
-					if getBuffRemain(lowest.unit,115175) == 0 then
-								if cast.soothingMist(lowest.unit) then return end
-									elseif getBuffRemain(lowest.unit,115175) > 1 then
-										if cast.envelopingMist(lowest.unit) then return end	
-					end							
-				end
+					if getBuffRemain(lowest.unit,115175) == 0 or not isCastingSpell(spell.soothingMist) then
+						if cast.soothingMist(lowest.unit) then return end
+					end
+					elseif lowest.hp <= getValue("Enveloping Mist") and getBuffRemain(lowest.unit,115175) > 1 and getBuffRemain(lowest.unit, spell.envelopingMist, "player") < 1 then
+						if cast.envelopingMist(lowest.unit) then return end	
+				end											
 			end
             --Vivify
 			if isChecked("Vivify") and not isCastingSpell(spell.essenceFont) then
-					if lowest.hp <= getValue("Vivify") then
-						 if getBuffRemain(lowest.unit,115175) == 0 then
-							 if cast.soothingMist(lowest.unit) then return end
-							 	elseif getBuffRemain(lowest.unit,115175) > 1 then
-									 if cast.vivify(lowest.unit) then return end
-						 end
-					end
+				if lowest.hp <= getValue("Vivify") then
+					if getBuffRemain(lowest.unit,115175) == 0 or not isCastingSpell(spell.soothingMist) then
+						if cast.soothingMist(lowest.unit) then return end
+					end						
+					elseif lowest.hp <= getValue("Vivify") and getBuffRemain(lowest.unit,115175) > 1 then
+						if cast.vivify(lowest.unit) then return end
+				end
 			end
 			-- Soothing Mist 2
             if isChecked("Soothing Mist") and not isCastingSpell(spell.essenceFont) then
