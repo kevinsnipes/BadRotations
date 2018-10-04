@@ -163,8 +163,8 @@ local function createOptions()
 		section = br.ui:createSection(br.ui.window.profile, colorLegendary.."Apotheosis Settings")
 		br.ui:createCheckbox(section, "Apotheosis Mode","Will Priotize use of Flash Heal, PoH, or Binding Heal to get Holy Words off CDs")
 		br.ui:createSpinner(section, "Apotheosis Binding Heal",  90,  0,  100,  1,  "Use Binding Heal while Apotheosis is active.")
-		br.ui:createSpinnerWithout(section, "Serenity and Sanctify CD",  30,  0,  60,  1,  "Only uses Binding Heal if both Serenity and Sanctify CD is above this.")
-		br.ui:createSpinnerWithout(section, "Tank Ignore",  50,  0,  100,  1,  "Ignores using Binding Heal during Apotheosis if Tank HP falls below this.")
+		br.ui:createSpinnerWithout(section, "Serenity and Sanctify CD",  30,  0,  60,  1,  "Only uses Binding Heal if Serenity or Sanctify CD is above this.")
+		--br.ui:createSpinnerWithout(section, "Tank Ignore",  50,  0,  100,  1,  "Ignores using Binding Heal during Apotheosis if Tank HP falls below this.")
 		br.ui:createSpinner(section, "Apotheosis Flash Heal",  85,  0,  100,  1,  "Use Flash Heal while Apotheosis is active.")
 		br.ui:createSpinnerWithout(section, "Apotheosis Serenity CD",  30,  0,  60,  1,  "Use Flash Heal only if Serenity CD is above this.")
 		br.ui:createSpinner(section, "Apotheosis Prayer of Healing",  90,  0,  100,  1,  "Use PoH while Apotheosis is active.")
@@ -543,9 +543,11 @@ local function runRotation()
 			--Apotheosis Mode
 			if isChecked("Apotheosis Mode") and getBuffRemain("player",200183) > 0 then
 				for i = 1, #br.friend do
-					if isChecked("Tank Ignore") and isChecked("Apotheosis Binding Heal") and br.friend[i].hp >= getValue("Tank Ignore") and (br.friend[i].role == "TANK" or UnitGroupRolesAssigned(br.friend[i].unit) == "TANK") then
-						if lowest.hp <= getValue("Apotheosis Binding Heal") and GetSpellCooldown(2050) > getValue("Serenity and Sanctify CD") and GetSpellCooldown(34861) > getValue("Serenity and Sanctify CD") then
-							if cast.bindingHeal(lowest.unit) then return end
+					if isChecked("Apotheosis Binding Heal") then
+						if cd.holyWordSanctify.remain() > getValue("Serenity and Sanctify CD") or cd.holyWordSerenity.remain() > getValue("Serenity and Sanctify CD") then
+							if lowest.hp <= getValue("Apotheosis Binding Heal") then
+								if cast.bindingHeal(lowest.unit) then return end
+							end
 						end
 					end
 					if isChecked("Apotheosis Flash Heal") and br.friend[i].hp <= getValue("Apotheosis Flash Heal") and GetSpellCooldown(2050) > getValue("Apotheosis Serenity CD") then
@@ -562,9 +564,11 @@ local function runRotation()
 					if isChecked("Tanks Only") then
 						if br.friend[i].hp <= getValue("Flash Heal Emergency") and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" then
 							if cast.flashHeal(br.friend[i].unit) then return end
-						elseif br.friend[i].hp <= getValue("Flash Heal Emergency") then
+						end
+					end
+					if not isChecked("Tanks Only") then
+						if br.friend[i].hp <= getValue("Flash Heal Emergency") then
 							if cast.flashHeal(br.friend[i].unit) then return end
-
 						end
 					end
 				end
@@ -617,9 +621,9 @@ local function runRotation()
 
 			-- Old Holy Word: Sanctify
 			if isChecked("Use Old HW Sanctify") then
-				if castWiseAoEHeal(br.friend,spell.holyWordSanctify,40,getValue("Holy Word: Sanctify"),getValue("Holy Word: Sanctify Targets"),6,false,false) then
+				if castWiseAoEHeal(br.friend,spell.holyWordSanctify,40,getValue("Holy Word: Sanctify"),getValue("Holy Word: Sanctify Targets"),6,false,true) then
 					RunMacroText("/stopspelltarget")
-				end
+				return true end
 			end
 			-- Prayer of Mending
 			if isChecked("Prayer of Mending") and getDebuffRemain("player",240447) == 0 and not isMoving("player")  then
@@ -764,14 +768,14 @@ local function runRotation()
 			-- Renew While Moving
 			if isChecked("Renew while moving") and isMoving("player") then
 				for i = 1, #br.friend do
-					if  isChecked("Renew Limit") and renewCount < getValue("Renew Limit") then
+					if isChecked("Renew Limit") and renewCount < getValue("Renew Limit") then
 						if br.friend[i].hp <= getValue("Renew while moving") and not buff.renew.exists(br.friend[i].unit) then
 							if cast.renew(br.friend[i].unit) then return end
 						end
-						if not isChecked("Renew Limit") then
-							if br.friend[i].hp <= getValue("Renew while moving") and not buff.renew.exists(br.friend[i].unit) then
-								if cast.renew(br.friend[i].unit) then return end
-							end
+					end
+					if not isChecked("Renew Limit") then
+						if br.friend[i].hp <= getValue("Renew while moving") and not buff.renew.exists(br.friend[i].unit) then
+							if cast.renew(br.friend[i].unit) then return end
 						end
 					end
 				end
